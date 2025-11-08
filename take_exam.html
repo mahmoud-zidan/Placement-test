@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Exam</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: auto; padding: 20px; }
+        .exam-list-item { padding: 10px; border: 1px solid #ccc; margin-bottom: 10px; cursor: pointer; }
+        .exam-list-item:hover { background-color: #f0f0f0; }
+        .question { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; }
+        .answer { margin-bottom: 5px; }
+        .media-container { margin-top: 10px; margin-bottom: 15px; }
+        /* Add a style for the media to ensure it fits well */
+        .media-container audio, .media-container iframe { max-width: 100%; }
+        #results { margin-top: 30px; font-weight: bold; padding: 15px; background-color: #e6ffe6; border: 1px solid #c6e6c6; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Take an Exam</h1>
+        
+        <div id="examSelection" style="display: block;">
+            <h2>Select an Exam:</h2>
+            <div id="examList">Loading exams...</div>
+        </div>
+
+        <div id="examDisplay" style="display: none;">
+            <h2 id="examTitle"></h2>
+            <form id="quizForm"></form>
+            <button onclick="window.submitExam()">Submit Exam</button>
+            <div id="results"></div>
+            <button onclick="window.resetView()" style="margin-top: 10px;">← Back to Exam List</button>
+        </div>
+    </div>
+    
+    <script src="./s.js"></script>
+</body>
+</html>
