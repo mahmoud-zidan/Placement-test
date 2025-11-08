@@ -3,107 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Management</title>
+    <title>Modli Exam Management</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1, h2 {
-            color: #333;
-        }
-        button {
-            padding: 10px 15px;
-            margin: 5px 0;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-        }
-        .primary { background-color: #007bff; color: white; }
-        .primary:hover { background-color: #0056b3; }
-        .danger { background-color: #dc3545; color: white; }
-        .danger:hover { background-color: #c82333; }
-        .secondary { background-color: #6c757d; color: white; }
-        .secondary:hover { background-color: #5a6268; }
-
-        /* View-specific styles */
-        #examList, #examForm {
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 5px;
-        }
-        .exam-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .exam-item:last-child {
-            border-bottom: none;
-        }
-        /* Form styles */
-        #examForm label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        #examForm input[type="text"],
-        #examForm textarea,
-        #examForm select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .question-block {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-        }
-        .answer-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        .answer-group input[type="text"] {
-            flex-grow: 1;
-            margin-right: 10px;
-        }
-        .answer-group input[type="checkbox"] {
-            margin-right: 10px;
-            width: auto; /* Override 100% width for checkboxes */
-        }
-        .notification {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            display: none;
-        }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    </style>
+    <link rel="stylesheet" href="./src/views/css/style.css">
 </head>
 <body>
 
     <div class="container">
-        <h1>🎓 Exam Editor</h1>
-
+        <h1>🎓 Welcome to Modli PlacementTest Exam Model</h1>
+        <a href="./src/views/html/Exam_take.html" id="takeExamButton">
+            Go to Take Exam →
+        </a>
         <div id="notificationArea" class="notification"></div>
 
         <div id="listView" class="view">
@@ -132,6 +43,10 @@
         </div>
 
     </div>
+
+    <footer class="footpage" style="text-align: center; padding: 10px 0; margin-top: 20px; font-size: 0.8em; color: #6c757d; border-top:  1px solid #ddd;">
+        &copy; 2025 Exam Management System For Modli. All Rights Reserved.
+    </footer>
 
     <script>
         // 1. Firebase Configuration
@@ -476,6 +391,6 @@
             window.setView('list'); // Ensure we start on the list view
         };
     </script>
-<a href="./take_exam.html">take exam</a>
+
 </body>
 </html>
