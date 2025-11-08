@@ -73,16 +73,13 @@ window.startExam = (key) => {
             qDiv.className = 'question';
             
             // 1. Render Media
-            // ... inside the loop for rendering questions (q, qIndex)
-
-// 1. Render Media
-let mediaHTML = '';
-if (q.mediaType === 'audio' && q.mediaUrl) {
-    // This is the correct way to render the audio element
-    mediaHTML = `<div class="media-container"><audio controls src="${q.mediaUrl}">Your browser does not support the audio element.</audio></div>`;
-} 
-// ... rest of the video logic
- else if (q.mediaType === 'video' && q.mediaUrl) {
+            let mediaHTML = '';
+            if (q.mediaType === 'audio' && q.mediaUrl) {
+                // This is the correct way to render the audio element
+                mediaHTML = `<div class="media-container"><audio controls src="${q.mediaUrl}">Your browser does not support the audio element.</audio></div>`;
+            } 
+            // ... rest of the video logic
+             else if (q.mediaType === 'video' && q.mediaUrl) {
                 // For YouTube, embed it in an iframe
                 let videoSrc = q.mediaUrl;
                 if (q.mediaUrl.includes('youtube.com/watch?v=')) {
@@ -123,18 +120,49 @@ window.submitExam = () => {
     const totalQuestions = currentExamData.questions.length;
     const form = document.getElementById('quizForm');
     
+    // Get all question HTML containers
+    const questionDivs = form.querySelectorAll('.question');
+
     currentExamData.questions.forEach((q, qIndex) => {
+        const questionDiv = questionDivs[qIndex]; // Get the HTML element for this question
         // Find the selected radio button for this question
         const selector = `input[name="question_${qIndex}"]:checked`;
-        const selectedAnswerInput = form.querySelector(selector);
+        const selectedAnswerInput = questionDiv.querySelector(selector);
         
+        let isCorrect = false;
+
         if (selectedAnswerInput) {
             const selectedAnswerIndex = parseInt(selectedAnswerInput.value);
             
             // Check if the selected answer is marked as correct in the data
             if (q.answers[selectedAnswerIndex].isCorrect) {
                 score++;
+                isCorrect = true;
             }
+
+            // Highlight the selected answer (whether correct or wrong)
+            const selectedLabel = selectedAnswerInput.closest('label');
+            if (selectedLabel) {
+                // Add a class to show which answer the user chose
+                selectedLabel.classList.add('selected-answer');
+            }
+        }
+
+        if (!isCorrect) {
+            // MARK QUESTION AS INCORRECT (FOR RED STYLING)
+            questionDiv.classList.add('incorrect-question');
+            
+            // Highlight the correct answer(s) for feedback
+            q.answers.forEach((answer, aIndex) => {
+                if (answer.isCorrect) {
+                     // Find the correct answer's input and then its label
+                     const correctInput = questionDiv.querySelector(`input[name="question_${qIndex}"][value="${aIndex}"]`);
+                     const correctLabel = correctInput ? correctInput.closest('label') : null;
+                     if (correctLabel) {
+                         correctLabel.classList.add('correct-answer-feedback');
+                     }
+                }
+            });
         }
     });
 
