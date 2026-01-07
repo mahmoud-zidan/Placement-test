@@ -10,6 +10,37 @@ body {
             padding: 20px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        .title-icon {
+        width: 30px;
+        height: 30px;
+        vertical-align: middle;
+        margin-right: 8px;
+        object-fit: contain; /* important for PNG/SVG */
+        }
+        .page-header {
+  width: 100%;
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* 🔥 THIS fixes the problem */
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  font-size: 36px;
+  font-weight: 700;
+  color: #0d6efd;
+}
+
+.header-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
         h1, h2 {
             color: #333;
         }

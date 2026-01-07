@@ -7,12 +7,19 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="./src/views/css/style.css">
+    <link rel="icon" type="image/png" href="./src/views/media/image/modli.png">
+
 </head>
 <body>
 
     <div class="container">
-        <h1>🎓 Welcome to Modli PlacementTest</h1>
-        <a href="./src/views/html/Exam_take.html" id="takeExamButton" style="background-color: #218838 ;position:absolute; top: 30px; padding: 10px 20px; background-color: #28a745; color: white; font-weight: bold;  text-decoration: none;box-shadow: 0 2px 5px rgba(40, 167, 69, 0.4);">
+    <header class="page-header" style="color: #007bff;">
+       <h1>
+            <img src="./src/views/media/image/modli.png" alt="Placement Test" class="header-icon">
+            Welcome to Modli PlacementTest
+        </h1>
+    </header>
+        <a href="./src/views/html/Exam_take.html" id="takeExamButton" style="background-color: #218838 ;position:absolute; top: 20px; padding: 10px 20px; background-color: #28a745; color: white; font-weight: bold;  text-decoration: none;box-shadow: 0 2px 5px rgba(40, 167, 69, 0.4);">
             Go to Take Exam →
         </a>
         <div id="notificationArea" class="notification"></div>
