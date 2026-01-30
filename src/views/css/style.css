@@ -23,6 +23,78 @@ body {
   display: flex;
   justify-content: center;
 }
+.filter-card {
+    background: #ffffff;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+}
+
+.filter-group label {
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
+}
+
+.filter-group input {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    outline: none;
+    min-width: 160px;
+    transition: all 0.2s ease;
+}
+
+.filter-group input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 2px rgba(79,70,229,0.15);
+}
+
+.button-group {
+    margin-left: auto;
+}
+
+.button-group button {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #4f46e5;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.button-group button:hover {
+    background: #4338ca;
+}
+
+@media (max-width: 600px) {
+    .button-group {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .button-group button {
+        width: 100%;
+    }
+}
+
+
 
 /* 🔥 THIS fixes the problem */
 .page-title {
