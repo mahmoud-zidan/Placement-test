@@ -1,404 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modli Exam Management</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="./src/views/css/style.css">
-    <link rel="icon" type="image/png" href="./src/views/media/image/modli.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modli Exam Management</title>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<link rel="stylesheet" href="./src/views/css/style.css">
+<link rel="icon" type="image/png" href="./src/views/media/image/modli.png">
 </head>
+
 <body>
+<div class="container">
 
-    <div class="container">
-    <header class="page-header" style="color: #007bff;">
-       <h1>
-            <img src="./src/views/media/image/modli.png" alt="Placement Test" class="header-icon">
-            Welcome to Modli PlacementTest
-        </h1>
-    </header>
-        <a href="./src/views/html/Exam_take.html" id="takeExamButton" style="background-color: #218838 ;position:absolute; top: 20px; padding: 10px 20px; background-color: #28a745; color: white; font-weight: bold;  text-decoration: none;box-shadow: 0 2px 5px rgba(40, 167, 69, 0.4);">
-            Go to Take Exam →
-        </a>
-        <div id="notificationArea" class="notification"></div>
+<header class="page-header" style="color:#007bff;">
+<h1>
+<img src="./src/views/media/image/modli.png" class="header-icon">
+Welcome to Modli PlacementTest
+</h1>
+</header>
 
-        <div id="listView" class="view">
-            <button class="primary" onclick="window.setView('form', true)">+ Add New Exam</button>
-            <div id="examList">
-                <h2>Saved Exams</h2>
-                <p id="loadingMessage">Loading exams...</p>
-            </div>
+<a href="./src/views/html/Exam_take.html" id="takeExamButton"
+style="position:absolute;top:20px;padding:10px 20px;background:#28a745;color:#fff;font-weight:bold;text-decoration:none;">
+Go to Take Exam →
+</a>
+
+<div id="notificationArea" class="notification"></div>
+
+<!-- LIST VIEW -->
+<div id="listView" class="view">
+<button class="primary" onclick="setView('form',true)">+ Add New Exam</button>
+<div id="examList">
+<h2>Saved Exams</h2>
+<p id="loadingMessage">Loading exams...</p>
+</div>
+</div>
+
+<!-- FORM VIEW -->
+<div id="formView" class="view" style="display:none;">
+<button class="secondary" onclick="setView('list')">← Back to List</button>
+<form id="examForm">
+<input type="hidden" id="examKey">
+
+<label>Exam Title:</label>
+<input type="text" id="examTitle" required>
+
+<div id="questionsContainer"></div>
+
+<button type="button" class="secondary" onclick="addQuestion()">+ Add Question</button><br>
+<button type="submit" class="primary">Save Exam</button>
+</form>
+</div>
+
+<!-- REPORT BUTTON  atito-->
+<div style="margin-top:15px;">
+<button onclick="showReport()" class="btn-secondary">View Report</button>
+</div>
+
+<!-- REPORT VIEW -->
+<div id="report" style="display:none;">
+<h2 style="text-align:center;">Exam Report</h2>
+
+
+<div class="filter-card">
+    <div class="filter-row">
+        <div class="filter-group">
+            <label>From</label>
+            <input type="date" id="dateFrom">
         </div>
 
-        <div id="formView" class="view" style="display:none;">
-            <button class="secondary" onclick="window.setView('list')">← Back to List</button>
-            <form id="examForm">
-                <input type="hidden" id="examKey">
-                
-                <label for="examTitle">Exam Title:</label>
-                <input type="text" id="examTitle" required>
-
-                <div id="questionsContainer">
-                    </div>
-
-                <button type="button" class="secondary" onclick="window.addQuestion()">+ Add Question</button>
-                <br>
-                <button type="submit" class="primary">Save Exam</button>
-                
-            </form>
+        <div class="filter-group">
+            <label>To</label>
+            <input type="date" id="dateTo">
         </div>
 
+        <div class="filter-group button-group">
+            <button onclick="showReport()">🔍 Search</button>
+        </div>
     </div>
-
-    <footer class="footpage" style="text-align: center; padding: 10px 0; margin-top: 20px; font-size: 0.8em; color: #6c757d; border-top:  1px solid #ddd;">
-        &copy; 2026 Exam Management System For Modli. All Rights Reserved &copy;Developed by Atito.
-    </footer>
-
-    <script>
-        // 1. Firebase Configuration
-        // !! REPLACE THIS WITH YOUR ACTUAL CONFIGURATION !!
-     const firebaseConfig = {
-    apiKey: "AIzaSyDsrWLvy8p_qnhimoOfPTvgnj6Ur_R2tW8",
-    authDomain: "placement-test-e5aa2.firebaseapp.com",
-    // --- ADD THIS LINE ---
-    databaseURL: "https://placement-test-e5aa2-default-rtdb.firebaseio.com", 
-    // ---------------------
-    projectId: "placement-test-e5aa2",
-    storageBucket: "placement-test-e5aa2.firebasestorage.app",
-    messagingSenderId: "379756680939",
-    appId: "1:379756680939:web:593c7e1ff765fc951e10ae",
-    measurementId: "G-ZL84L8KYS5"
-};
-        // Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const database = firebase.database();
-        const examsRef = database.ref('exams');
-
-        let currentQuestionId = 0; // Counter for unique question IDs
-
-        // --- Utility Functions ---
-
-        /**
-         * Shows a notification message to the user.
-         * @param {string} message - The message text.
-         * @param {boolean} isError - True for error, false for success.
-         */
-        function showNotification(message, isError = false) {
-            const area = document.getElementById('notificationArea');
-            area.textContent = message;
-            area.className = 'notification ' + (isError ? 'error' : 'success');
-            area.style.display = 'block';
-            setTimeout(() => {
-                area.style.display = 'none';
-            }, 3000);
-        }
-
-        /**
-         * Switches the view between 'list' and 'form'.
-         * @param {string} viewName - 'list' or 'form'.
-         * @param {boolean} isNew - Clears form if true (only for 'form' view).
-         */
-        window.setView = (viewName, isNew = false) => {
-            document.getElementById('listView').style.display = viewName === 'list' ? 'block' : 'none';
-            document.getElementById('formView').style.display = viewName === 'form' ? 'block' : 'none';
-
-            if (viewName === 'form' && isNew) {
-                document.getElementById('examForm').reset();
-                document.getElementById('examKey').value = '';
-                document.getElementById('questionsContainer').innerHTML = '';
-                currentQuestionId = 0;
-                window.addQuestion(); // Start with one question
-            }
-        };
-
-        // --- Question/Answer Management ---
-
-        /**
-         * Generates the HTML for a question block, including media options.
-         * @param {Object} questionData - Existing question data (optional).
-         */
-        window.addQuestion = (questionData = {text: '', mediaType: 'none', mediaUrl: '', answers: [{text: '', isCorrect: false}]}) => {
-            currentQuestionId++;
-            const qid = currentQuestionId;
-            const container = document.getElementById('questionsContainer');
-            const questionBlock = document.createElement('div');
-            questionBlock.className = 'question-block';
-            questionBlock.id = `q-${qid}`;
-
-            let answersHtml = (questionData.answers || []).map((answer, index) => 
-                window.createAnswerHTML(qid, index + 1, answer.text, answer.isCorrect)
-            ).join('');
-
-            // If no answers exist, ensure one empty answer is present
-            if (!questionData.answers || questionData.answers.length === 0) {
-                 answersHtml = window.createAnswerHTML(qid, 1, '', false);
-            }
-            
-            // Setup for Media inputs
-            const selectedNone = questionData.mediaType === 'none' ? 'selected' : '';
-            const selectedAudio = questionData.mediaType === 'audio' ? 'selected' : '';
-            const selectedVideo = questionData.mediaType === 'video' ? 'selected' : '';
-            const mediaUrlDisplay = questionData.mediaType === 'none' ? 'none' : 'block';
-
-            questionBlock.innerHTML = `
-                <label for="qMediaSelect-${qid}">Media Type:</label>
-                <select id="qMediaSelect-${qid}" onchange="document.getElementById('qMediaUrl-${qid}').style.display = this.value === 'none' ? 'none' : 'block';">
-                    <option value="none" ${selectedNone}>None</option>
-                    <option value="audio" ${selectedAudio}>Audio (MP3, etc.)</option>
-                    <option value="video" ${selectedVideo}>Video (YouTube, MP4 link, etc.)</option>
-                </select>
-                
-                <input 
-                    type="text" 
-                    id="qMediaUrl-${qid}" 
-                    placeholder="Enter Media URL (e.g., YouTube Link or MP3 URL)"
-                    value="${questionData.mediaUrl || ''}"
-                    style="display: ${mediaUrlDisplay}; margin-top: 5px;"
-                >
-                
-                <label for="qText-${qid}" style="margin-top: 15px;">Question ${qid} Text (Optional for media questions):</label>
-                <textarea id="qText-${qid}" rows="3">${questionData.text || ''}</textarea>
-                
-                <h4>Answers:</h4>
-                <div id="answersContainer-${qid}">${answersHtml}</div>
-                
-                <button type="button" class="secondary" onclick="window.addAnswer(${qid})">+ Add Answer</button>
-                <button type="button" class="danger" onclick="window.removeQuestion(${qid})">Remove Question</button>
-                <hr>
-            `;
-            container.appendChild(questionBlock);
-        };
-
-        /**
-         * Generates HTML for a single answer field.
-         */
-        window.createAnswerHTML = (qid, aid, text = '', isCorrect = false) => {
-            const uniqueId = `a-${qid}-${aid}`;
-            const checkboxChecked = isCorrect ? 'checked' : '';
-            return `
-                <div class="answer-group" id="${uniqueId}">
-                    <input type="text" placeholder="Answer Text" value="${text}" required>
-                    <label>
-                        <input type="checkbox" ${checkboxChecked}> Correct
-                    </label>
-                    <button type="button" class="danger" onclick="window.removeAnswer('${uniqueId}')">X</button>
-                </div>
-            `;
-        };
-
-        /**
-         * Adds a new answer field to a specific question.
-         * @param {number} qid - The ID of the question.
-         */
-        window.addAnswer = (qid) => {
-            const container = document.getElementById(`answersContainer-${qid}`);
-            const answerCount = container.children.length;
-            container.insertAdjacentHTML('beforeend', window.createAnswerHTML(qid, answerCount + 1));
-        };
-
-        /**
-         * Removes a question block.
-         * @param {number} qid - The ID of the question to remove.
-         */
-        window.removeQuestion = (qid) => {
-            const questionBlock = document.getElementById(`q-${qid}`);
-            if (questionBlock) {
-                questionBlock.remove();
-            }
-        };
-
-        /**
-         * Removes an answer field.
-         * @param {string} answerId - The unique ID of the answer group (e.g., 'a-1-2').
-         */
-        window.removeAnswer = (answerId) => {
-            const answerGroup = document.getElementById(answerId);
-            if (answerGroup) {
-                answerGroup.remove();
-            }
-        };
-
-        // --- Data Handling ---
-
-        /**
-         * Converts the form data into a structured exam object.
-         */
-        window.collectExamData = () => {
-            const examKey = document.getElementById('examKey').value;
-            const examTitle = document.getElementById('examTitle').value;
-            const questions = [];
-            
-            const questionBlocks = document.querySelectorAll('.question-block');
-            questionBlocks.forEach(block => {
-                
-                // Get Media Data
-                const mediaType = block.querySelector('select').value;
-                const mediaUrlInput = block.querySelector('input[type="text"][placeholder*="URL"]');
-                const mediaUrl = mediaUrlInput ? mediaUrlInput.value.trim() : '';
-
-                const questionText = block.querySelector('textarea').value.trim();
-                const answers = [];
-                const answerGroups = block.querySelectorAll('.answer-group');
-                
-                answerGroups.forEach(group => {
-                    const answerTextInput = group.querySelector('input[type="text"]');
-                    const answerText = answerTextInput ? answerTextInput.value.trim() : '';
-                    const isCorrect = group.querySelector('input[type="checkbox"]').checked;
-                    
-                    if (answerText) {
-                        answers.push({ text: answerText, isCorrect: isCorrect });
-                    }
-                });
-
-                // Validation: Only save the question if it has text OR media AND has answers
-                if ((questionText || mediaType !== 'none') && answers.length > 0) {
-                    questions.push({ 
-                        text: questionText, 
-                        mediaType: mediaType,
-                        mediaUrl: mediaUrl,
-                        answers: answers 
-                    });
-                }
-            });
-
-            if (!examTitle) {
-                showNotification('Exam title is required.', true);
-                return null;
-            }
-            if (questions.length === 0) {
-                 showNotification('At least one valid question (with text/media and answers) is required.', true);
-                 return null;
-            }
-
-            return { title: examTitle, questions: questions, key: examKey };
-        };
-
-        /**
-         * Handles the form submission and saves the exam data to Firebase.
-         */
-        document.getElementById('examForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            window.saveExam();
-        });
-
-        window.saveExam = () => {
-            const examData = window.collectExamData();
-            if (!examData) return;
-
-            const key = examData.key;
-            delete examData.key; // Remove temporary key property before saving
-            
-            try {
-                if (key) {
-                    // Update existing exam
-                    examsRef.child(key).set(examData);
-                    showNotification('Exam updated successfully!', false);
-                } else {
-                    // Add new exam
-                    examsRef.push(examData);
-                    showNotification('New exam saved successfully!', false);
-                }
-                // The setView('list') will trigger loadExamList due to Firebase listener
-                window.setView('list'); 
-            } catch (error) {
-                console.error("Error saving exam:", error);
-                showNotification('Error saving exam. Check console for details.', true);
-            }
-        };
+</div>
 
 
-        /**
-         * Loads a selected exam into the form for editing.
-         * @param {string} key - The Firebase key of the exam.
-         */
-        window.editExam = (key) => {
-            examsRef.child(key).once('value', (snapshot) => {
-                const exam = snapshot.val();
-                if (exam) {
-                    window.setView('form');
-                    document.getElementById('examKey').value = key;
-                    document.getElementById('examTitle').value = exam.title;
-                    document.getElementById('questionsContainer').innerHTML = '';
-                    currentQuestionId = 0;
 
-                    if (exam.questions) {
-                        exam.questions.forEach(q => window.addQuestion(q));
-                    }
-                    
-                    // If no questions were loaded, add one default
-                    if (!exam.questions || exam.questions.length === 0) {
-                        window.addQuestion();
-                    }
-                }
-            });
-        };
+<div id="reportContent"></div>
+<div style="text-align:center;margin-top:15px;">
+<button onclick="resetReport()" class="btn-secondary">Reset Report</button>
+<button onclick="printReport()" class="btn-secondary">Print as PDF</button>
+<button onclick="setView('list')" class="btn-secondary">Back</button>
+</div>
+</div>
 
-        /**
-         * Deletes an exam from Firebase.
-         * @param {string} key - The Firebase key of the exam.
-         * @param {string} title - The title of the exam for confirmation.
-         */
-        window.deleteExam = (key, title) => {
-            if (confirm(`Are you sure you want to delete the exam: "${title}"?`)) {
-                examsRef.child(key).remove()
-                    .then(() => {
-                        showNotification(`Exam "${title}" deleted successfully.`, false);
-                    })
-                    .catch(error => {
-                        console.error("Error deleting exam:", error);
-                        showNotification('Error deleting exam.', true);
-                    });
-            }
-        };
+<footer class="footpage" style="text-align:center;margin-top:20px;">
+&copy; 2026 Modli Exam System — Developed by Atito
+</footer>
+</div>
 
-        // --- List Loading ---
-
-        /**
-         * Listens for changes in the 'exams' data and updates the list view.
-         */
-        window.loadExamList = () => {
-            const listDiv = document.getElementById('examList');
-            examsRef.on('value', (snapshot) => {
-                const exams = snapshot.val();
-                listDiv.innerHTML = '<h2>Saved Exams</h2>';
-                
-                if (!exams) {
-                    listDiv.innerHTML += '<p>No exams saved yet. Click "Add New Exam" to get started!</p>';
-                    return;
-                }
-
-                Object.keys(exams).forEach(key => {
-                    const exam = exams[key];
-                    // Defensive check for question count
-                    const questionCount = exam.questions ? Object.keys(exam.questions).length : 0; 
-                    const item = document.createElement('div');
-                    item.className = 'exam-item';
-                    item.innerHTML = `
-                        <span>${exam.title} (${questionCount} Qs)</span>
-                        <div>
-                            <button class="secondary" onclick="window.editExam('${key}')">Edit</button>
-                            <button class="danger" onclick="window.deleteExam('${key}', '${exam.title.replace(/'/g, "\\'")}')">Delete</button>
-                        </div>
-                    `;
-                    listDiv.appendChild(item);
-                });
-            }, (error) => {
-                // Error handling for read failures (e.g., due to security rules)
-                document.getElementById('loadingMessage').textContent = 'Error loading exams: ' + error.message;
-                showNotification('Failed to load exams from database. Check console and Firebase rules.', true);
-            });
-        };
-
-        // Initialize the app
-        window.onload = () => {
-            window.loadExamList();
-            window.setView('list'); // Ensure we start on the list view
-        };
-    </script>
-
+<script src="./src/views/js/script.js"></script>
 </body>
 </html>
