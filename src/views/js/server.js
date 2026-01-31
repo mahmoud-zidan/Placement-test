@@ -15,6 +15,7 @@ if (!firebase.apps.length) {
 }
 const database = firebase.database();
 const examsRef = database.ref('exams');
+const resultsRef = database.ref('results');
 
 let currentExamData = null; // Store the selected exam data
 
@@ -50,12 +51,16 @@ window.resetView = () => {
     window.loadExamList();
 }
 
-window.onload = window.loadExamList;
+window.onload = () => {
+    window.loadExamList();
+    window.generateReport(); // Generate report on load
+};
 
 // B//
 window.startExam = (key) => {
     examsRef.child(key).once('value', (snapshot) => {
         currentExamData = snapshot.val();
+        currentExamData.id = key; // Store the exam key
         if (!currentExamData || !currentExamData.questions) {
             alert("This exam is empty or invalid.");
             return;
@@ -178,4 +183,100 @@ window.submitExam = () => {
     
     // Disable the form after submission
     form.querySelectorAll('input').forEach(input => input.disabled = true);
+
+    // Store result in Firebase
+    const resultData = {
+        examId: currentExamData.id || 'unknown',
+        category: currentExamData.category || 'uncategorized',
+        score: score,
+        totalQuestions: totalQuestions,
+        percentage: percentage,
+        timestamp: new Date().toISOString()
+    };
+    resultsRef.push(resultData).then(() => {
+        console.log('Result stored successfully');
+        window.generateReport(); // Update report after storing result
+    }).catch(error => {
+        console.error('Error storing result:', error);
+        alert('Error storing result: ' + error.message);
+    });
+};
+
+// Generate report function
+window.generateReport = () => {
+    Promise.all([
+        resultsRef.once('value'),
+        examsRef.once('value')
+    ]).then(([resultsSnapshot, examsSnapshot]) => {
+        const results = resultsSnapshot.val();
+        const exams = examsSnapshot.val();
+        if (!results) {
+            document.getElementById('reportContent').innerHTML = '<p>No results available.</p>';
+            return;
+        }
+
+        const examStats = {};
+        Object.values(results).forEach(result => {
+            const examId = result.examId;
+            const examTitle = exams && exams[examId] ? exams[examId].title : 'Unknown Exam';
+            if (!examStats[examTitle]) {
+                examStats[examTitle] = { scores: [], count: 0 };
+            }
+            examStats[examTitle].scores.push(result.score);
+            examStats[examTitle].count++;
+        });
+
+        let reportHTML = '<h3>Exam Report by Exam Name</h3><table border="1"><tr><th>Exam Name</th><th>Number of Entrants</th><th>Min Score</th><th>Avg Score</th><th>Max Score</th></tr>';
+        Object.keys(examStats).forEach(examTitle => {
+            const stats = examStats[examTitle];
+            const min = Math.min(...stats.scores);
+            const max = Math.max(...stats.scores);
+            const avg = (stats.scores.reduce((a, b) => a + b, 0) / stats.scores.length).toFixed(2);
+            reportHTML += `<tr><td>${examTitle}</td><td>${stats.count}</td><td>${min}</td><td>${avg}</td><td>${max}</td></tr>`;
+        });
+        reportHTML += '</table>';
+
+        document.getElementById('reportContent').innerHTML = reportHTML;
+    }).catch(error => {
+        console.error('Error generating report:', error);
+        document.getElementById('reportContent').innerHTML = '<p>Error loading report.</p>';
+    });
+};
+
+// Reset report function
+window.resetReport = () => {
+    if (confirm('Are you sure you want to reset the report? This will delete all stored results.')) {
+        resultsRef.remove().then(() => {
+            console.log('Report reset successfully');
+            document.getElementById('reportContent').innerHTML = '<p>Report has been reset. No results available.</p>';
+        }).catch(error => {
+            console.error('Error resetting report:', error);
+            alert('Error resetting report: ' + error.message);
+        });
+    }
+};
+
+// Print report as PDF function
+window.printReport = () => {
+    const printWindow = window.open('', '_blank');
+    const reportContent = document.getElementById('reportContent').innerHTML;
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Exam Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <h2>Exam Report</h2>
+            ${reportContent}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
 };
