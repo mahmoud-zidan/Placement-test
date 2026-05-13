@@ -25,7 +25,9 @@ let currentExamData = null;
 let currentQuestionIndex = 0;
 let studentAnswers = [];
 let examTimer = null;
+let globalTimer = null;
 let timeLeft = 0;
+let globalTimeLeft = 0;
 
 window.loadExamList = () => {
     const listDiv = document.getElementById('examList');
@@ -150,11 +152,52 @@ window.startExam = (key) => {
             // Disable back navigation during exam
             const backBtn = document.getElementById('backBtn');
             if(backBtn) backBtn.style.display = 'none';
+
+            // Global Timer Initialization
+            const globalTimerDisplay = document.getElementById('globalTimerDisplay');
+            if (currentExamData.totalTime && currentExamData.totalTime > 0) {
+                globalTimerDisplay.style.display = 'block';
+                globalTimeLeft = currentExamData.totalTime * 60; // Minutes to seconds
+                startGlobalTimer();
+            } else {
+                globalTimerDisplay.style.display = 'none';
+            }
             
             window.renderQuestion();
         });
     });
 };
+
+function startGlobalTimer() {
+    if(globalTimer) clearInterval(globalTimer);
+    updateGlobalTimerDisplay();
+    
+    globalTimer = setInterval(() => {
+        globalTimeLeft--;
+        updateGlobalTimerDisplay();
+        
+        if (globalTimeLeft <= 0) {
+            clearInterval(globalTimer);
+            alert("Time is up! Your exam is being submitted automatically.");
+            window.submitExam();
+        }
+    }, 1000);
+}
+
+function updateGlobalTimerDisplay() {
+    const minutes = Math.floor(globalTimeLeft / 60);
+    const seconds = globalTimeLeft % 60;
+    const display = document.getElementById('globalTimer');
+    if (display) {
+        display.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        
+        // Critical time warning
+        if (globalTimeLeft <= 60) { // Last minute
+            display.parentElement.style.color = '#ef4444';
+            display.parentElement.style.borderColor = '#fca5a5';
+        }
+    }
+}
 
 window.renderQuestion = () => {
     if(examTimer) clearInterval(examTimer);
@@ -289,6 +332,8 @@ window.endExamEarly = () => {
 
 window.submitExam = () => {
     if (!currentExamData) return;
+    if(globalTimer) clearInterval(globalTimer);
+    if(examTimer) clearInterval(examTimer);
 
     let score = 0;
     const totalQuestions = currentExamData.questions.length;

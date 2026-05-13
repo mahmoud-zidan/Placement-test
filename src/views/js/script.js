@@ -261,6 +261,7 @@ e.preventDefault();
 const key=document.getElementById("examKey").value;
 const title = document.getElementById("examTitle").value.trim();
 const targetOrg = document.getElementById("examOrg").value;
+const totalTime = parseInt(document.getElementById("examTotalTime").value) || 0;
 const isVisible = document.getElementById("examVisibility").checked;
 
 if(!title){
@@ -298,6 +299,7 @@ if(questions.length === 0){
 const exam={
     title: title,
     targetOrg: targetOrg,
+    totalTime: totalTime,
     isVisible: isVisible,
     questions: questions,
     updatedAt: new Date().toISOString()
@@ -382,6 +384,7 @@ setView("form");
 document.getElementById("examKey").value=k;
 document.getElementById("examTitle").value=e.title;
 document.getElementById("examOrg").value=e.targetOrg || "all";
+document.getElementById("examTotalTime").value=e.totalTime || 0;
 document.getElementById("examVisibility").checked = e.isVisible !== false;
 document.getElementById("questionsContainer").innerHTML="";
 qid=0;
