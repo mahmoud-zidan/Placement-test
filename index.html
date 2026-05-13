@@ -7,96 +7,123 @@
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
 <link rel="stylesheet" href="./src/views/css/style.css">
 <link rel="icon" type="image/png" href="./src/views/media/image/modli.png">
 </head>
 
 <body>
+<!-- LOGIN MODAL -->
+<div id="loginOverlay" style="display: none;">
+    <div class="login-card">
+        <h2 style="margin-bottom: 20px; font-family: 'Outfit';">Admin Login</h2>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label>Email</label>
+                <input type="email" id="loginEmail" required placeholder="admin@modli.com">
+            </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label>Password</label>
+                <input type="password" id="loginPass" required placeholder="••••••••">
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button type="submit" class="primary" style="flex: 1;">Login</button>
+                <button type="button" class="secondary" onclick="hideLogin()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="container">
 
-<header class="page-header" style="color:#007bff;">
-<h1>
-<img src="./src/views/media/image/modli.png" class="header-icon">
-Welcome to Modli PlacementTest
-</h1>
+<header class="page-header">
+    <h1 class="page-title">
+        <img src="./src/views/media/image/modli.png" class="header-icon">
+        Modli PlacementTest
+    </h1>
+    <div class="auth-section">
+        <a href="./src/views/html/Exam_take.html" id="takeExamButton">Go to Take Exam →</a>
+        <button id="loginBtn" class="secondary" onclick="showLogin()">Admin Login</button>
+        <button id="logoutBtn" class="secondary" onclick="handleLogout()" style="display:none;">Logout</button>
+    </div>
 </header>
-
-<a href="./src/views/html/Exam_take.html" id="takeExamButton"
-style="position:absolute;top:20px;padding:10px 20px;background:#28a745;color:#fff;font-weight:bold;text-decoration:none;">
-Go to Take Exam →
-</a>
 
 <div id="notificationArea" class="notification"></div>
 
 <!-- LIST VIEW -->
 <div id="listView" class="view">
-<button class="primary" onclick="setView('form',true)">+ Add New Exam</button>
-<div id="examList">
-<h2>Saved Exams</h2>
-<p id="loadingMessage">Loading exams...</p>
-</div>
+    <div class="admin-only" style="margin-bottom: 20px;">
+        <button class="primary" onclick="setView('form',true)">+ Add New Exam</button>
+        <button onclick="showReport()" class="secondary">View Report</button>
+    </div>
+    <div id="examList">
+        <h2>Saved Exams</h2>
+        <p id="loadingMessage">Loading exams...</p>
+    </div>
 </div>
 
 <!-- FORM VIEW -->
 <div id="formView" class="view" style="display:none;">
-<button class="secondary" onclick="setView('list')">← Back to List</button>
-<form id="examForm">
-<input type="hidden" id="examKey">
+    <button class="secondary" onclick="setView('list')">← Back to List</button>
+    <form id="examForm">
+        <input type="hidden" id="examKey">
+        
+        <div class="form-group">
+            <label>Exam Title:</label>
+            <input type="text" id="examTitle" required placeholder="Enter exam title...">
+        </div>
 
-<label>Exam Title:</label>
-<input type="text" id="examTitle" required>
+        <div id="questionsContainer"></div>
 
-<div id="questionsContainer"></div>
-
-<button type="button" class="secondary" onclick="addQuestion()">+ Add Question</button><br>
-<button type="submit" class="primary">Save Exam</button>
-</form>
-</div>
-
-<!-- REPORT BUTTON  atito-->
-<div style="margin-top:15px;">
-<button onclick="showReport()" class="btn-secondary">View Report</button>
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button type="button" class="secondary" onclick="addQuestion()">+ Add Question</button>
+            <button type="submit" class="primary">Save Exam</button>
+        </div>
+    </form>
 </div>
 
 <!-- REPORT VIEW -->
-<div id="report" style="display:none;">
-<h2 style="text-align:center;">Exam Report</h2>
+<div id="report" class="view" style="display:none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2>Exam Report</h2>
+        <button onclick="setView('list')" class="secondary">Back to List</button>
+    </div>
 
+    <div class="filter-card">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>From</label>
+                <input type="date" id="dateFrom">
+            </div>
 
-<div class="filter-card">
-    <div class="filter-row">
-        <div class="filter-group">
-            <label>From</label>
-            <input type="date" id="dateFrom">
+            <div class="filter-group">
+                <label>To</label>
+                <input type="date" id="dateTo">
+            </div>
+
+            <div class="button-group">
+                <button onclick="showReport()" class="primary">🔍 Search</button>
+            </div>
         </div>
+    </div>
 
-        <div class="filter-group">
-            <label>To</label>
-            <input type="date" id="dateTo">
-        </div>
-
-        <div class="filter-group button-group">
-            <button onclick="showReport()">🔍 Search</button>
-        </div>
+    <div id="reportContent"></div>
+    
+    <div style="text-align:center; margin-top: 32px; display: flex; gap: 12px; justify-content: center;">
+        <button onclick="resetReport()" class="danger">Clear All Data</button>
+        <button onclick="printReport()" class="secondary">Print as PDF</button>
     </div>
 </div>
 
-
-
-<div id="reportContent"></div>
-<div style="text-align:center;margin-top:15px;">
-<button onclick="resetReport()" class="btn-secondary">Reset Report</button>
-<button onclick="printReport()" class="btn-secondary">Print as PDF</button>
-<button onclick="setView('list')" class="btn-secondary">Back</button>
-</div>
-</div>
-
-<footer class="footpage" style="text-align:center;margin-top:20px;">
-&copy; 2026 Modli Exam System — Developed by Atito
+<footer class="footpage" style="text-align:center; margin-top: 40px; color: var(--text-muted); font-size: 0.9rem;">
+    &copy; 2026 Modli Exam System — Developed by Atito
 </footer>
+
 </div>
+
 
 <script src="./src/views/js/script.js"></script>
+<script src="./src/views/js/View_Report.js" ></script>
 </body>
 </html>

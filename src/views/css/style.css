@@ -1,218 +1,263 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap');
+
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --secondary: #10b981;
+    --secondary-hover: #059669;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --radius: 12px;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .title-icon {
-        width: 30px;
-        height: 30px;
-        vertical-align: middle;
-        margin-right: 8px;
-        object-fit: contain; /* important for PNG/SVG */
-        }
-        .page-header {
-  width: 100%;
-  padding: 20px 0;
-  display: flex;
-  justify-content: center;
-}
-.filter-card {
-    background: #ffffff;
-    padding: 15px 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.5;
 }
 
-.filter-row {
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    background: var(--bg-card);
+    padding: 40px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+}
+
+/* Header Styles */
+.page-header {
+    margin-bottom: 40px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 20px;
     display: flex;
-    align-items: flex-end;
-    gap: 15px;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.filter-group {
+.page-title {
+    font-family: 'Outfit', sans-serif;
     display: flex;
-    flex-direction: column;
-    font-size: 14px;
+    align-items: center;
+    gap: 12px;
+    font-size: 2rem;
+    color: var(--primary);
 }
 
-.filter-group label {
-    margin-bottom: 5px;
+.header-icon {
+    width: 48px;
+    height: 48px;
+}
+
+/* Auth Section */
+.auth-section {
+    display: flex;
+    gap: 12px;
+}
+
+#takeExamButton {
+    background: var(--secondary);
+    color: white;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    text-decoration: none;
     font-weight: 600;
-    color: #555;
-}
-
-.filter-group input {
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    outline: none;
-    min-width: 160px;
     transition: all 0.2s ease;
 }
 
-.filter-group input:focus {
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 2px rgba(79,70,229,0.15);
+#takeExamButton:hover {
+    background: var(--secondary-hover);
+    transform: translateY(-1px);
 }
 
-.button-group {
-    margin-left: auto;
+/* View Containers */
+.view {
+    animation: fadeIn 0.3s ease-out;
 }
 
-.button-group button {
-    padding: 9px 20px;
-    border-radius: 8px;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Buttons */
+button {
+    font-family: inherit;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: var(--radius);
     border: none;
-    background: #4f46e5;
-    color: white;
-    font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.button-group button:hover {
-    background: #4338ca;
+.primary { background-color: var(--primary); color: white; }
+.primary:hover { background-color: var(--primary-hover); }
+
+.secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); }
+.secondary:hover { background-color: #e2e8f0; }
+
+.danger { background-color: var(--danger); color: white; }
+.danger:hover { background-color: var(--danger-hover); }
+
+/* List Items */
+.exam-item {
+    background: var(--bg-main);
+    margin-bottom: 12px;
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border);
 }
 
-@media (max-width: 600px) {
-    .button-group {
-        margin-left: 0;
-        width: 100%;
-    }
-
-    .button-group button {
-        width: 100%;
-    }
+.exam-item:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow);
 }
 
-
-
-/* 🔥 THIS fixes the problem */
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 0;
-  font-size: 36px;
-  font-weight: 700;
-  color: #0d6efd;
+/* Forms */
+#examForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.header-icon {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-        h1, h2 {
-            color: #333;
-        }
-        button {
-            padding: 10px 15px;
-            margin: 5px 0;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-        }
-        .primary { background-color: #007bff; color: white; }
-        .primary:hover { background-color: #0056b3; }
-        .danger { background-color: #dc3545; color: white; }
-        .danger:hover { background-color: #c82333; }
-        .secondary { background-color: #6c757d; color: white; }
-        .secondary:hover { background-color: #5a6268; }
+label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
 
-        /* #takeExamButton {
-            position: absolute;
-            top: 30px;
-            right: 20px;
-            padding: 10px 20px;
-            background-color: #28a745; 
-            color: white;
-            font-weight: bold;
-            text-decoration: none;
-            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.4);
-        }
-        #takeExamButton:hover {
-            background-color: #218838;
-        }*/
-       
-      /* .footpage {
-            text-align: center;
-            padding: 10px 0;
-            margin-top: 20px;
-            font-size: 0.8em;
-            color: #6c757d;
-            border-top: 1px solid #ddd;
-        }  */
-        /* View-specific styles */
-        #examList, #examForm {
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 5px;
-        }
-        .exam-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .exam-item:last-child {
-            border-bottom: none;
-        }
-        /* Form styles */
-        #examForm label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        #examForm input[type="text"],
-        #examForm textarea,
-        #examForm select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .question-block {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-        }
-        .answer-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        .answer-group input[type="text"] {
-            flex-grow: 1;
-            margin-right: 10px;
-        }
-        .answer-group input[type="checkbox"] {
-            margin-right: 10px;
-            width: auto; /* Override 100% width for checkboxes */
-        }
-        .notification {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            display: none;
-        }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        
+input[type="text"], input[type="date"], textarea {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.question-block {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 24px;
+    border-radius: var(--radius);
+    margin-top: 20px;
+}
+
+/* Report Styles */
+.filter-card {
+    background: #f8fafc;
+    padding: 24px;
+    border-radius: var(--radius);
+    margin-bottom: 32px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 20px 0;
+}
+
+th, td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    background: #f1f5f9;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    font-weight: 500;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+.success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* Login Modal */
+#loginOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.login-card {
+    background: white;
+    padding: 32px;
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+}
+
+.admin-only {
+    display: none;
+}
+
     
