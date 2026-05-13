@@ -13,6 +13,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const examsRef = db.ref("exams");
 const resultsRef = db.ref("results");
+const orgsRef = db.ref("organizations");
 
 /* ================= AUTH LOGIC ================= */
 let currentUser = null;
@@ -33,7 +34,7 @@ function updateUIForAuth() {
     
     // Toggle buttons
     document.getElementById("loginBtn").style.display = currentUser ? "none" : "block";
-    document.getElementById("logoutBtn").style.display = currentUser ? "block" : "none";
+    document.getElementById("adminNav").style.display = currentUser ? "flex" : "none";
     
     // Toggle admin-only sections
     const adminElements = document.querySelectorAll(".admin-only");
@@ -75,44 +76,91 @@ function handleLogout() {
     });
 }
 
-/* ================= CACHE EXAMS ================= */
+/* ================= CACHE EXAMS & ORGS ================= */
 let examsCache = {};
 examsRef.on("value", s => {
     examsCache = s.val() || {};
     renderExamList();
 });
 
+let orgsCache = {};
+orgsRef.on("value", s => {
+    orgsCache = s.val() || {};
+    renderOrgList();
+});
+
 /* ================= UTIL ================= */
 let qid = 0;
 
 function showNotification(msg, err=false){
+console.log("Notification:", msg);
 const n=document.getElementById("notificationArea");
+if(!n) return;
 n.textContent=msg;
 n.className="notification "+(err?"error":"success");
 n.style.display="block";
 setTimeout(()=>n.style.display="none",3000);
 }
+window.showNotification = showNotification;
 
-function setView(view,newForm=false){
-    if((view === 'form' || view === 'report') && !isAdmin()) {
+function customConfirm(title, msg, onConfirm) {
+    const modal = document.getElementById("confirmModal");
+    const t = document.getElementById("confirmTitle");
+    const m = document.getElementById("confirmMsg");
+    const btn = document.getElementById("confirmBtn");
+    const cancel = document.getElementById("confirmCancel");
+
+    t.textContent = title;
+    m.textContent = msg;
+    modal.style.display = "flex";
+
+    const close = () => { modal.style.display = "none"; };
+
+    btn.onclick = () => { close(); onConfirm(); };
+    cancel.onclick = close;
+}
+
+function setView(view, newForm=false){
+    console.log("Setting view:", view);
+    
+    // Admin access check
+    if((view === 'form' || view === 'report' || view === 'orgs') && !isAdmin()) {
         showNotification("Admin access required", true);
         return;
     }
 
-    ["listView","formView","report"].forEach(v=>document.getElementById(v).style.display="none");
-    const viewMap = {
-        "list": "listView",
-        "form": "formView",
-        "report": "report"
-    };
-    const elementId = viewMap[view] || view;
-    document.getElementById(elementId).style.display="block";
+    // Hide all views
+    ["listView","formView","report","orgsView"].forEach(v=>document.getElementById(v).style.display="none");
     
-    if(view==="form" && newForm){
+    // Update active nav state
+    const navIds = { list: "nav-list", orgs: "nav-orgs", report: "nav-report" };
+    Object.values(navIds).forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.remove("active");
+    });
+    if(navIds[view]) {
+        const activeNav = document.getElementById(navIds[view]);
+        if(activeNav) activeNav.classList.add("active");
+    }
+
+    // Show selected view
+    const viewMap = {
+        list: "listView",
+        form: "formView",
+        report: "report",
+        orgs: "orgsView"
+    };
+    if(viewMap[view]) document.getElementById(viewMap[view]).style.display="block";
+
+    if(view === "form" && newForm){
         document.getElementById("examForm").reset();
+        document.getElementById("examVisibility").checked = true;
         document.getElementById("questionsContainer").innerHTML="";
         qid=0; addQuestion();
     }
+
+    if(view === "orgs") renderOrgList();
+    if(view === "report") populateReportFilters();
 }
 
 /* ================= QUESTIONS ================= */
@@ -126,12 +174,27 @@ d.innerHTML=`
     <label style="font-weight:bold; color: var(--primary);">Question ${questionNum}</label>
     <button type="button" class="danger" onclick="deleteQuestion(this)" style="padding:4px 12px; font-size: 0.8rem;">Delete</button>
 </div>
-<textarea style="width:100%;" placeholder="Enter question text here..."></textarea>
+<textarea style="width:100%; margin-bottom: 12px;" placeholder="Enter question text here..."></textarea>
+
+<div style="background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+    <label style="margin-bottom: 8px; display: block;">Media Attachment (Optional)</label>
+    <div style="display: flex; gap: 12px;">
+        <select class="media-type" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            <option value="none">No Media</option>
+            <option value="audio">Audio Link</option>
+            <option value="video">Video Link (YouTube)</option>
+        </select>
+        <input type="text" class="media-url" placeholder="Paste link here..." style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+    </div>
+</div>
+
 <div class="answers" style="margin-top:15px; display: flex; flex-direction: column; gap: 8px;"></div>
 <button type="button" class="secondary" onclick="addAnswer(this)" style="margin-top:15px; font-size: 0.9rem;">+ Add Answer</button>`;
 document.getElementById("questionsContainer").appendChild(d);
 const answersDiv = d.querySelector(".answers");
 d.querySelector("textarea").value = q.text;
+d.querySelector(".media-type").value = q.mediaType || "none";
+d.querySelector(".media-url").value = q.mediaUrl || "";
 if(q.answers && q.answers.length > 0) {
     q.answers.forEach(a => addAnswerToDiv(answersDiv, a));
 } else {
@@ -140,13 +203,15 @@ if(q.answers && q.answers.length > 0) {
 }
 
 function deleteQuestion(btn){
-if(document.querySelectorAll(".question-block").length <= 1){
-    showNotification("You must have at least one question", true);
-    return;
-}
-if(confirm("Delete this question?")){
-    btn.parentNode.parentNode.remove();
-}
+    if(document.querySelectorAll(".question-block").length <= 1){
+        showNotification("You must have at least one question", true);
+        return;
+    }
+    if(confirm("Are you sure you want to delete this question?")){
+        const block = btn.closest(".question-block");
+        if(block) block.remove();
+        // Optional: Renumber questions if needed, but for now we'll just remove.
+    }
 }
 
 function addAnswer(btn,a={text:"",isCorrect:false}){
@@ -171,6 +236,7 @@ document.getElementById("examForm").onsubmit=e=>{
 e.preventDefault();
 const key=document.getElementById("examKey").value;
 const title = document.getElementById("examTitle").value.trim();
+const isVisible = document.getElementById("examVisibility").checked;
 
 if(!title){
     showNotification("Exam title is required", true);
@@ -179,12 +245,17 @@ if(!title){
 
 const questions = [...document.querySelectorAll(".question-block")].map(q=>{
 const text = q.querySelector("textarea").value.trim();
+const mediaType = q.querySelector(".media-type").value;
+const mediaUrl = q.querySelector(".media-url").value.trim();
+
 if(!text){
     showNotification("All questions must have text", true);
     throw new Error("Question text is empty");
 }
 return {
     text: text,
+    mediaType: mediaType !== "none" ? mediaType : null,
+    mediaUrl: mediaUrl || null,
     answers:[...q.querySelectorAll(".answers > div")].map(a=>({
         text:a.querySelector("input[type=text]").value.trim(),
         isCorrect:a.querySelector("input[type=checkbox]").checked
@@ -199,6 +270,7 @@ if(questions.length === 0){
 
 const exam={
     title: title,
+    isVisible: isVisible,
     questions: questions,
     updatedAt: new Date().toISOString()
 };
@@ -222,31 +294,41 @@ if(key){
 
 /* ================= LIST ================= */
 function renderExamList() {
-    const list=document.getElementById("examList");
+    const list = document.getElementById("examList");
     if(!list) return;
-    list.innerHTML="<h2 style='margin-bottom: 20px;'>Saved Exams</h2>";
     
-    const admin = isAdmin();
-    
-    if(Object.keys(examsCache).length === 0){
-        list.innerHTML+="<p style='color: var(--text-muted);'>No exams yet.</p>";
+    const keys = Object.keys(examsCache);
+    if(keys.length === 0) {
+        list.innerHTML = `
+            <div style="text-align: center; padding: 60px; grid-column: 1/-1;">
+                <h3 style="color: var(--text-muted);">No exams found</h3>
+                <p style="color: var(--text-muted);">Click '+ Add New Exam' to create your first placement test.</p>
+            </div>`;
         return;
     }
 
-    Object.keys(examsCache).forEach(k=>{
-        const exam = examsCache[k];
-        const questionCount = exam.questions ? exam.questions.length : 0;
-        list.innerHTML+=`
-        <div class="exam-item">
-            <div style="flex-grow:1;">
-                <span style="font-weight:600; font-size: 1.1rem;">${exam.title}</span>
-                <div style="color: var(--text-muted); font-size:0.85rem; margin-top: 4px;">${questionCount} questions • Updated ${new Date(exam.updatedAt).toLocaleDateString()}</div>
+    list.innerHTML = "";
+    keys.forEach(k => {
+        const e = examsCache[k];
+        const qCount = e.questions ? e.questions.length : 0;
+        const visibilityTag = e.isVisible !== false 
+            ? '<span style="color: #059669; background: #ecfdf5; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem;">Visible</span>' 
+            : '<span style="color: #dc2626; background: #fef2f2; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem;">Hidden</span>';
+
+        list.innerHTML += `
+        <div class="exam-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h3>${e.title}</h3>
+                ${visibilityTag}
             </div>
-            ${admin ? `
-            <div style="display:flex;gap:8px;">
-                <button class="secondary" onclick="editExam('${k}')" style="padding:6px 16px;">Edit</button>
-                <button class="danger" onclick="deleteExam('${k}')" style="padding:6px 16px;">Delete</button>
-            </div>` : ''}
+            <div class="exam-meta">
+                <span>📝 ${qCount} Questions</span>
+                <span>📅 ${new Date(e.updatedAt || Date.now()).toLocaleDateString()}</span>
+            </div>
+            <div class="exam-actions">
+                <button class="secondary" onclick="editExam('${k}')" style="flex: 1;">Edit</button>
+                <button class="danger" onclick="deleteExam('${k}')" style="padding: 10px;">Delete</button>
+            </div>
         </div>`;
     });
 }
@@ -271,6 +353,7 @@ if(!e){
 setView("form");
 document.getElementById("examKey").value=k;
 document.getElementById("examTitle").value=e.title;
+document.getElementById("examVisibility").checked = e.isVisible !== false;
 document.getElementById("questionsContainer").innerHTML="";
 qid=0;
 if(e.questions && e.questions.length > 0) {
@@ -279,6 +362,61 @@ if(e.questions && e.questions.length > 0) {
     addQuestion();
 }
 }
+
+/* ================= ORGANIZATIONS ================= */
+function renderOrgList() {
+    const list = document.getElementById("orgList");
+    if(!list) return;
+    list.innerHTML = "";
+    
+    const keys = Object.keys(orgsCache);
+    if(keys.length === 0) {
+        list.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 16px;">
+                <p style="color: #64748b;">No organizations added yet.</p>
+            </div>`;
+        return;
+    }
+
+    keys.forEach(k => {
+        const org = orgsCache[k];
+        list.innerHTML += `
+        <div class="exam-item" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; transition: all 0.2s;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-weight: 700;">${org.name.charAt(0).toUpperCase()}</div>
+                <span style="font-weight: 600; color: #1e293b;">${org.name}</span>
+            </div>
+            <button class="danger" onclick="deleteOrganization('${k}')" style="padding: 8px 16px; font-size: 0.85rem; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Delete</button>
+        </div>`;
+    });
+}
+
+function addOrganization() {
+    const nameInput = document.getElementById("newOrgName");
+    const name = nameInput.value.trim();
+    if(!name) {
+        showNotification("Please enter an organization name", true);
+        return;
+    }
+    orgsRef.push({ name: name }).then(() => {
+        showNotification("Organization added");
+        nameInput.value = "";
+    }).catch(err => {
+        showNotification("Error: " + err.message, true);
+    });
+}
+window.addOrganization = addOrganization;
+
+function deleteOrganization(k) {
+    customConfirm("Delete Organization", "Are you sure you want to delete this organization? Students will no longer be able to select it.", () => {
+        orgsRef.child(k).remove().then(() => {
+            showNotification("Organization deleted");
+        }).catch(err => {
+            showNotification("Error: " + err.message, true);
+        });
+    });
+}
+window.deleteOrganization = deleteOrganization;
 
 /* INIT */
 setView("list");

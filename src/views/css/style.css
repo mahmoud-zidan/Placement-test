@@ -2,19 +2,19 @@
 
 :root {
     --primary: #4f46e5;
-    --primary-hover: #4338ca;
+    --primary-light: #6366f1;
+    --primary-dark: #3730a3;
     --secondary: #10b981;
-    --secondary-hover: #059669;
     --danger: #ef4444;
-    --danger-hover: #dc2626;
-    --bg-main: #f8fafc;
+    --bg-main: #f1f5f9;
     --bg-card: #ffffff;
-    --text-main: #1e293b;
+    --text-main: #0f172a;
     --text-muted: #64748b;
     --border: #e2e8f0;
-    --radius: 12px;
+    --radius: 16px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 * {
@@ -27,237 +27,287 @@ body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-main);
     color: var(--text-main);
-    line-height: 1.5;
+    line-height: 1.6;
+    overflow-x: hidden;
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 40px auto;
-    background: var(--bg-card);
-    padding: 40px;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
+    padding: 0 20px;
     position: relative;
 }
 
 /* Header Styles */
 .page-header {
-    margin-bottom: 40px;
-    border-bottom: 2px solid var(--border);
-    padding-bottom: 20px;
+    background: white;
+    padding: 20px 32px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border: 1px solid var(--border);
 }
 
 .page-title {
     font-family: 'Outfit', sans-serif;
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 2rem;
-    color: var(--primary);
+    gap: 16px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
 }
 
 .header-icon {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
 }
 
 /* Auth Section */
 .auth-section {
     display: flex;
     gap: 12px;
+    align-items: center;
 }
 
 #takeExamButton {
     background: var(--secondary);
     color: white;
     padding: 10px 20px;
-    border-radius: var(--radius);
+    border-radius: 12px;
     text-decoration: none;
     font-weight: 600;
-    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 10px -2px rgba(16, 185, 129, 0.3);
 }
 
 #takeExamButton:hover {
-    background: var(--secondary-hover);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px -3px rgba(16, 185, 129, 0.4);
+}
+
+/* Navigation Tabs */
+#adminNav {
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    display: flex;
+    gap: 4px;
+}
+
+#adminNav button {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+#adminNav button:hover {
+    color: var(--text-main);
+    background: #e2e8f0;
+}
+
+#adminNav button.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: var(--shadow-sm);
 }
 
 /* View Containers */
 .view {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.4s cubic-bezier(0, 0, 0.2, 1);
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 /* Buttons */
 button {
     font-family: inherit;
-    font-weight: 500;
-    padding: 10px 20px;
-    border-radius: var(--radius);
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 12px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.primary { background-color: var(--primary); color: white; }
-.primary:hover { background-color: var(--primary-hover); }
+.primary { 
+    background: var(--primary); 
+    color: white; 
+    box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.3);
+}
+.primary:hover { 
+    background: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px -3px rgba(79, 70, 229, 0.4);
+}
 
-.secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); }
-.secondary:hover { background-color: #e2e8f0; }
-
-.danger { background-color: var(--danger); color: white; }
-.danger:hover { background-color: var(--danger-hover); }
-
-/* List Items */
-.exam-item {
-    background: var(--bg-main);
-    margin-bottom: 12px;
-    padding: 16px 20px;
-    border-radius: var(--radius);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.secondary { 
+    background: white; 
+    color: var(--text-main); 
     border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+.secondary:hover { 
+    background: #f8fafc;
+    border-color: #cbd5e1;
 }
 
-.exam-item:hover {
-    border-color: var(--primary);
-    box-shadow: var(--shadow);
+.danger { 
+    background: #fef2f2; 
+    color: var(--danger);
+    border: 1px solid #fee2e2;
+}
+.danger:hover { 
+    background: #fee2e2;
+}
+
+/* Dashboard Grid */
+#examList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.exam-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.exam-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-light);
+}
+
+.exam-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, transparent 50%, rgba(79, 70, 229, 0.05) 50%);
+    transition: all 0.3s;
+}
+
+.exam-card:hover::after {
+    width: 120px;
+    height: 120px;
+}
+
+.exam-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.exam-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.exam-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
 }
 
 /* Forms */
-#examForm {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-label {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-input[type="text"], input[type="date"], textarea {
-    padding: 12px 16px;
-    border-radius: 8px;
+.card-view {
+    background: white;
+    padding: 32px;
+    border-radius: 24px;
     border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+input[type="text"], input[type="email"], input[type="password"], textarea, select {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
     font-family: inherit;
     font-size: 1rem;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
 }
 
-input:focus, textarea:focus {
+input:focus, textarea:focus, select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
 }
 
+/* Question Blocks */
 .question-block {
-    background: #ffffff;
-    border: 1px solid var(--border);
-    padding: 24px;
-    border-radius: var(--radius);
-    margin-top: 20px;
-}
-
-/* Report Styles */
-.filter-card {
     background: #f8fafc;
+    border: 1px solid #e2e8f0;
     padding: 24px;
-    border-radius: var(--radius);
-    margin-bottom: 32px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    position: relative;
+    transition: all 0.2s;
 }
 
-.filter-row {
-    display: flex;
-    gap: 20px;
-    align-items: flex-end;
-}
-
-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin: 20px 0;
-}
-
-th, td {
-    padding: 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-}
-
-th {
-    background: #f1f5f9;
-    font-weight: 600;
-    color: var(--text-muted);
-}
-
-tr:hover td {
-    background-color: #f8fafc;
+.question-block:hover {
+    border-color: #cbd5e1;
+    background: white;
 }
 
 /* Notifications */
 .notification {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 24px;
+    right: 24px;
     padding: 16px 24px;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
-    z-index: 1000;
-    font-weight: 500;
-    animation: slideIn 0.3s ease-out;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    z-index: 5000;
+    font-weight: 600;
+    display: none;
+    animation: slideIn 0.4s cubic-bezier(0, 0, 0.2, 1);
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
-.success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.error { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
 
-/* Login Modal */
-#loginOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(4px);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
-
-.login-card {
-    background: white;
-    padding: 32px;
-    border-radius: var(--radius);
-    width: 100%;
-    max-width: 400px;
-    box-shadow: var(--shadow-lg);
-}
-
+/* Admin Only */
 .admin-only {
     display: none;
 }
-
-    

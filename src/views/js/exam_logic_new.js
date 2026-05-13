@@ -16,6 +16,10 @@ if (!firebase.apps.length) {
 const database = firebase.database();
 const examsRef = database.ref('exams');
 const resultsRef = database.ref('results');
+const orgsRef = database.ref('organizations');
+
+// Retrieve student identity from session if available
+let studentInfo = JSON.parse(sessionStorage.getItem('studentInfo') || 'null');
 
 let currentExamData = null; // Store the selected exam data
 
@@ -34,6 +38,8 @@ window.loadExamList = () => {
 
         Object.keys(exams).forEach(key => {
             const exam = exams[key];
+            if (exam.isVisible === false) return; // Skip hidden exams
+
             const item = document.createElement('div');
             item.className = 'exam-list-item';
             item.textContent = `${exam.title} (${exam.questions ? exam.questions.length : 0} Qs)`;
@@ -52,6 +58,43 @@ window.resetView = () => {
 }
 
 window.onload = () => {
+    // If student is already registered in this session, skip registration
+    if (studentInfo) {
+        document.getElementById('registrationView').style.display = 'none';
+        document.getElementById('examSelection').style.display = 'block';
+        window.loadExamList();
+    }
+
+    // Fetch organizations for the dropdown
+    orgsRef.once('value', (snapshot) => {
+        const orgs = snapshot.val();
+        const select = document.getElementById('orgSelect');
+        if (orgs) {
+            Object.values(orgs).forEach(org => {
+                const opt = document.createElement('option');
+                opt.value = org.name;
+                opt.textContent = org.name;
+                select.appendChild(opt);
+            });
+        }
+    });
+};
+
+window.registerStudent = () => {
+    const name = document.getElementById('studentName').value.trim();
+    const id = document.getElementById('nationalId').value.trim();
+    const org = document.getElementById('orgSelect').value;
+
+    if (!name || !id || !org) {
+        alert("Please fill in all fields and select an organization.");
+        return;
+    }
+
+    studentInfo = { name, id, org };
+    sessionStorage.setItem('studentInfo', JSON.stringify(studentInfo));
+    
+    document.getElementById('registrationView').style.display = 'none';
+    document.getElementById('examSelection').style.display = 'block';
     window.loadExamList();
 };
 
@@ -128,65 +171,44 @@ window.submitExam = () => {
     const questionDivs = form.querySelectorAll('.question');
 
     currentExamData.questions.forEach((q, qIndex) => {
-        const questionDiv = questionDivs[qIndex]; // Get the HTML element for this question
-        // Find the selected radio button for this question
+        const questionDiv = questionDivs[qIndex];
         const selector = `input[name="question_${qIndex}"]:checked`;
-        const selectedAnswerInput = questionDiv.querySelector(selector);
+        const selectedAnswerInput = questionDiv ? questionDiv.querySelector(selector) : null;
         
-        let isCorrect = false;
-
         if (selectedAnswerInput) {
             const selectedAnswerIndex = parseInt(selectedAnswerInput.value);
-            
-            // Check if the selected answer is marked as correct in the data
             if (q.answers[selectedAnswerIndex].isCorrect) {
                 score++;
-                isCorrect = true;
             }
-
-            // Highlight the selected answer (whether correct or wrong)
-            const selectedLabel = selectedAnswerInput.closest('label');
-            if (selectedLabel) {
-                // Add a class to show which answer the user chose
-                selectedLabel.classList.add('selected-answer');
-            }
-        }
-
-        if (!isCorrect) {
-            // MARK QUESTION AS INCORRECT (FOR RED STYLING)
-            questionDiv.classList.add('incorrect-question');
-            
-            // Highlight the correct answer(s) for feedback
-            q.answers.forEach((answer, aIndex) => {
-                if (answer.isCorrect) {
-                     // Find the correct answer's input and then its label
-                     const correctInput = questionDiv.querySelector(`input[name="question_${qIndex}"][value="${aIndex}"]`);
-                     const correctLabel = correctInput ? correctInput.closest('label') : null;
-                     if (correctLabel) {
-                         correctLabel.classList.add('correct-answer-feedback');
-                     }
-                }
-            });
         }
     });
 
     const percentage = ((score / totalQuestions) * 100).toFixed(0);
     const resultsDiv = document.getElementById('results');
     
-    resultsDiv.style.display = 'block';
-    resultsDiv.innerHTML = `
-        <h3>Results:</h3>
-        <p>You scored **${score} out of ${totalQuestions}**.</p>
-        <p>Percentage: **${percentage}%**</p>
-    `;
+    if (resultsDiv) {
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <h3 style="color: #166534; margin-bottom: 10px;">Exam Submitted Successfully!</h3>
+                <p>Thank you for completing the exam. Your results have been recorded and sent to the administrator.</p>
+            </div>
+        `;
+    }
     
     // Disable the form after submission
     form.querySelectorAll('input').forEach(input => input.disabled = true);
 
     // Store result in Firebase
+    const info = JSON.parse(sessionStorage.getItem('studentInfo') || 'null');
+    console.log('Submitting exam. Student Info from session:', info);
+
     const resultData = {
         examId: currentExamData.id || 'unknown',
-        category: currentExamData.category || 'uncategorized',
+        examTitle: currentExamData.title || 'Unknown Exam',
+        studentName: (info && info.name) ? info.name : "Anonymous",
+        nationalId: (info && info.id) ? info.id : "N/A",
+        orgName: (info && info.org) ? info.org : "N/A",
         score: score,
         totalQuestions: totalQuestions,
         percentage: percentage,
@@ -194,7 +216,6 @@ window.submitExam = () => {
     };
     resultsRef.push(resultData).then(() => {
         console.log('Result stored successfully');
-        window.generateReport(); // Update report after storing result
     }).catch(error => {
         console.error('Error storing result:', error);
         alert('Error storing result: ' + error.message);

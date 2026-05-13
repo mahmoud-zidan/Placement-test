@@ -15,22 +15,60 @@
       <header class="page-header">
         <h1 class="page-title">
             <img src="../media/image/modli.png" alt="Placement Test" class="header-icon">
-            Take an Exam
+            Take an Exam <span style="font-size: 0.5em; vertical-align: middle; background: #4f46e5; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 10px;">v2.5</span>
         </h1>
       </header>
 
        
         
-        <div id="examSelection" style="display: block;">
-            <h2>Select an Exam:</h2>
-            <div id="examList">Loading exams...</div>
+        <!-- REGISTRATION VIEW -->
+        <div id="registrationView" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; padding: 20px;">
+            <div class="filter-card" style="width: 100%; max-width: 480px; background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); border: 1px solid #f1f5f9;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h2 style="font-size: 1.75rem; color: #0f172a; margin-bottom: 8px;">Welcome Student</h2>
+                    <p style="color: #64748b; font-size: 0.95rem;">Please enter your details to begin the exam</p>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #334155; font-size: 0.9rem;">Full Name</label>
+                    <input type="text" id="studentName" placeholder="Enter your full name..." required style="width: 100%; padding: 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 1rem; outline: none; transition: all 0.2s;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #334155; font-size: 0.9rem;">National ID / ID Number</label>
+                    <input type="text" id="nationalId" placeholder="Enter your ID number..." required style="width: 100%; padding: 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 1rem; outline: none; transition: all 0.2s;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #334155; font-size: 0.9rem;">Select Your Organization</label>
+                    <select id="orgSelect" style="width: 100%; padding: 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 1rem; outline: none; background: white; cursor: pointer;">
+                        <option value="">Choose from list...</option>
+                    </select>
+                </div>
+
+                <button onclick="window.registerStudent()" class="btn-primary" style="width: 100%; padding: 16px; font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); border: none; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">Start Exam Now →</button>
+                
+                <p style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: #94a3b8;">Your progress will be saved automatically.</p>
+            </div>
+        </div>
+
+        <!-- EXAM SELECTION (Initially Hidden) -->
+        <div id="examSelection" style="display: none;">
+            <h2 style="text-align: center; color: #333; margin-bottom: 20px;">Choose an Exam</h2>
+            <div id="examList" class="exam-list">
+                <!-- Exam buttons will be loaded here -->
+            </div>
         </div>
 
         <div id="examDisplay" style="display: none;">
-            <h2 id="examTitle"></h2>
-            <form id="quizForm"></form>
-            <button onclick="window.submitExam()" class="btn-submit">Submit Exam</button>
-            <div id="results"></div>
+            <h2 id="examTitle" style="text-align: center; color: #333; margin-bottom: 20px;"></h2>
+            <div id="quizForm">
+                <!-- Questions will be loaded here -->
+            </div>
+            <div id="results" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 12px; margin-top: 20px; color: #166534;">
+                <!-- Results will be shown here -->
+            </div>
+            <button onclick="window.submitExam()" class="btn-primary" style="margin-top: 20px; width: 100%;">Submit Exam</button>
             <button onclick="window.resetView()" class="btn-secondary" style="margin-top: 15px;">← Back to Exam List</button>
         </div>
 
@@ -40,6 +78,6 @@
     <footer class="footpage" style="text-align: center; padding: 10px 0; margin-top: 20px; font-size: 0.8em; color: #6c757d; border-top:  1px solid #ddd;">
         &copy; 2026 Exam Management System For Modli. All Rights Reserved&copy;Developed by Atito.
     </footer>
-    <script src="../js/server.js"></script>
+    <script src="../js/exam_logic_new.js"></script>
 </body>
 </html>
