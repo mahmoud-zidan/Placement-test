@@ -33,8 +33,13 @@ window.loadExamList = () => {
     const listDiv = document.getElementById('examList');
     listDiv.innerHTML = "Loading exams...";
     
-    examsRef.once('value', (snapshot) => {
-        const exams = snapshot.val();
+    // Fetch both exams and results. Filter results in JS to avoid index dependency for now.
+    Promise.all([
+        examsRef.once('value'),
+        resultsRef.once('value')
+    ]).then(([examsSnap, resultsSnap]) => {
+        const exams = examsSnap.val();
+        const allResults = resultsSnap.val() || {};
         listDiv.innerHTML = '';
 
         if (!exams) {
@@ -42,6 +47,15 @@ window.loadExamList = () => {
             return;
         }
 
+        // Filter results for this specific student manually
+        const completedExamIds = new Set();
+        Object.values(allResults).forEach(r => {
+            if (String(r.nationalId) === String(studentInfo.id) && !r.retryAllowed) {
+                completedExamIds.add(r.examId);
+            }
+        });
+
+        let visibleExamsCount = 0;
         Object.keys(exams).forEach(key => {
             const exam = exams[key];
             if (exam.isVisible === false) return;
@@ -49,15 +63,33 @@ window.loadExamList = () => {
             // Filter by Organization
             const studentOrg = studentInfo ? studentInfo.org : null;
             if (exam.targetOrg && exam.targetOrg !== "all" && exam.targetOrg !== studentOrg) {
-                return; // Skip if not for this student's org
+                return; 
             }
 
+            // ONE TIME ONLY: Hide if already completed
+            if (completedExamIds.has(key)) {
+                return;
+            }
+
+            visibleExamsCount++;
             const item = document.createElement('div');
             item.className = 'exam-list-item';
             item.textContent = `${exam.title} (${exam.questions ? exam.questions.length : 0} Qs)`;
             item.onclick = () => window.startExam(key);
             listDiv.appendChild(item);
         });
+
+        if (visibleExamsCount === 0) {
+            listDiv.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #64748b; background: #f8fafc; border-radius: 12px; border: 1px dashed #e2e8f0;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">✅</div>
+                    <p style="font-weight: 600; color: #1e293b;">Assessment Complete</p>
+                    <p style="font-size: 0.9rem;">You have completed all available exams assigned to your profile.</p>
+                </div>`;
+        }
+    }).catch(err => {
+        listDiv.innerHTML = "Error loading exams: " + err.message;
+        console.error(err);
     });
 };
 
@@ -377,7 +409,6 @@ window.submitExam = () => {
                     You have completed the <b>${currentExamData.title}</b>.<br>
                     Your results have been securely recorded.
                 </p>
-                <button onclick="window.location.reload()" class="btn-primary" style="padding: 12px 32px; border-radius: 12px; font-weight: 600;">Return Home</button>
             </div>
         `;
     }).catch(err => {
