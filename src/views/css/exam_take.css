@@ -1,184 +1,145 @@
-body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        /* Modern Reset & Base */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f5f7fa; /* Light background for the page */
-            color: #333;
+            background-color: #f8fafc;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
         }
+
         .container {
-            max-width: 800px;
+            max-width: 720px;
             margin: 40px auto;
-            padding: 30px;
+            padding: 32px;
             background: #ffffff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 24px;
         }
-        
+
         .page-header {
-  width: 100%;
-  padding: 20px 0;
-  display: flex;
-  justify-content: center;
-}
-
-/* 🔥 THIS fixes the problem */
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 0;
-  font-size: 36px;
-  font-weight: 700;
-  color: #0d6efd;
-}
-
-.header-icon {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-}
-
-
-
-        h1 {
-            color: #007bff; /* Primary brand color */
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            font-size: 2em;
-        }
-
-        /* --- Buttons --- */
-        button {
-            padding: 10px 20px;
-            margin: 5px 0;
-            border: none;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 1em;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-        button:active {
-            transform: scale(0.99);
-        }
-        /* Submit Button (Primary Action) */
-        .btn-submit { 
-            background-color: #28a745; 
-            color: white; 
-            font-weight: bold;
-        }
-        .btn-submit:hover { 
-            background-color: #218838;
-        }
-        /* Back Button (Secondary Action) */
-        .btn-secondary { 
-            background-color: #6c757d; 
-            color: white; 
-        }
-        .btn-secondary:hover { 
-            background-color: #5a6268; 
-        }
-
-        /* --- Exam List Styles --- */
-        .exam-list-item {
-            padding: 15px;
-            border: 1px solid #e0e0e0;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
+            width: 100%;
+            padding: 20px 0;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+        }
+
+        .page-title {
+            display: flex;
             align-items: center;
-            font-weight: 500;
+            gap: 16px;
+            margin: 0;
+            font-size: 32px;
+            font-weight: 800;
+            color: #1e293b;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .header-icon {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+        }
+
+        .btn-primary { 
+            background: #4f46e5; 
+            color: white; 
+            font-weight: 700;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
+        }
+        .btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
+
+        .btn-finish {
+            background: #10b981;
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
+        }
+        .btn-finish:hover { background: #059669; transform: translateY(-1px); }
+
+        .btn-secondary { 
+            background: #f1f5f9; 
+            color: #475569; 
+            font-weight: 600;
+        }
+        .btn-secondary:hover { background: #e2e8f0; }
+
+        /* Question Animation */
+        .question-fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Interactive Answers */
+        .answer-item {
+            border: 2px solid #e2e8f0;
+            background: white;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .answer-item:hover {
+            border-color: #4f46e5;
+            background: #f8faff;
+            transform: translateY(-2px);
+        }
+
+        .radio-circle {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #cbd5e1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .answer-item[style*="borderColor: rgb(79, 70, 229)"] .radio-circle {
+            border-color: #4f46e5;
+            background: #4f46e5;
+        }
+
+        /* Media Container */
+        .media-container {
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .media-container audio { width: 100%; }
+
+        /* Exam List */
+        .exam-list-item {
+            padding: 20px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            transition: all 0.2s;
         }
         .exam-list-item:hover {
-            background-color: #f0f8ff; /* Light blue on hover */
-            border-color: #007bff; /* Blue border on hover */
+            border-color: #4f46e5;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+            transform: translateX(5px);
         }
 
-        /* --- Question & Form Styles --- */
-        .question {
-            margin-bottom: 30px;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #fcfcfc;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        .btn-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            font-weight: 600;
+            transition: all 0.2s;
         }
-        .question h4 {
-            color: #007bff;
-            margin-top: 0;
-            border-bottom: 1px dashed #e0e0e0;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
-        }
-        .answer {
-            margin-bottom: 10px;
-            padding: 5px 0;
-            display: flex;
-            align-items: center;
-        }
-        .answer label {
-            cursor: pointer;
-            margin-left: 8px;
-        }
-        .answer input[type="radio"] {
-            transform: scale(1.2); /* Slightly larger radio buttons */
-            margin-right: 10px;
-        }
-        
-        /* --- Media Styles --- */
-        .media-container {
-            margin-top: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            overflow: hidden; /* Important for iframes */
-        }
-        .media-container audio, .media-container iframe { 
-            max-width: 100%; 
-            display: block; 
-        }
-
-        /* --- Results Area --- */
-        #results { 
-            margin-top: 30px; 
-            font-weight: bold; 
-            padding: 20px; 
-            background-color: #d4edda; /* Light green success color */
-            color: #155724; /* Dark green text color */
-            border: 1px solid #c3e6cb; 
-            border-radius: 8px;
-            display: none; 
-        }
-        #results h3 {
-            color: #155724;
-            margin-top: 0;
-        }
-
-        /* --- Feedback Styles (NEW) --- */
-        /* Red color for the entire question block if answered incorrectly */
-        .incorrect-question {
-            border-color: #dc3545; /* Danger/Red border */
-            background-color: #f8d7da; /* Light red background */
-        }
-        .incorrect-question h4 {
-            color: #dc3545; /* Red question text */
-        }
-
-        /* Style the answer the user selected */
-        .selected-answer {
-            font-style: italic;
-            font-weight: bold;
-        }
-        
-        /* Highlight the actual correct answer inside a wrong question block */
-        /* This class will be applied to the correct answer's <label> */
-        .correct-answer-feedback {
-            font-weight: bold;
-            color: #1e7e34; /* Darker green color for the correct answer */
-            background-color: #c3e6cb; /* Very light green highlight */
-            padding: 2px 4px;
-            border-radius: 4px;
+        .btn-danger:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #b91c1c;
         }

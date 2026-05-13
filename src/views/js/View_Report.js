@@ -139,11 +139,19 @@ function showReport() {
                         <th style="text-transform: uppercase; font-size: 0.75rem; color: #64748b; letter-spacing: 0.05em;">Exam Info</th>
                         <th style="text-transform: uppercase; font-size: 0.75rem; color: #64748b; letter-spacing: 0.05em;">Score Status</th>
                         <th style="text-transform: uppercase; font-size: 0.75rem; color: #64748b; letter-spacing: 0.05em;">Submission Date</th>
+                        <th style="text-transform: uppercase; font-size: 0.75rem; color: #64748b; letter-spacing: 0.05em;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>`;
 
+        // We need keys to update records. Let's get them from the snapshot.
+        const snapData = snap.val();
+        const keys = Object.keys(snapData);
+        
         resultsList.forEach(r => {
+            // Find key for this result
+            const rKey = keys.find(k => snapData[k].timestamp === r.timestamp && snapData[k].nationalId === r.nationalId);
+            
             const scorePercent = parseFloat(r.percentage || 0);
             const isPass = scorePercent >= 50;
             const scoreBg = isPass ? '#ecfdf5' : '#fef2f2';
@@ -177,6 +185,12 @@ function showReport() {
                 <td style="color: #94a3b8; font-size: 0.8rem; font-weight: 500;">
                     ${new Date(r.timestamp).toLocaleDateString()}
                     <div style="font-size: 0.7rem; opacity: 0.7;">${new Date(r.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                </td>
+                <td style="padding: 12px 24px;">
+                    ${r.retryAllowed ? 
+                        '<span style="color: #10b981; font-size: 0.75rem; font-weight: 700;">✅ Retry Enabled</span>' : 
+                        `<button onclick="window.allowRetry('${rKey}')" class="secondary" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer;">Allow Retry</button>`
+                    }
                 </td>
             </tr>`;
         });
@@ -212,6 +226,17 @@ window.setQuickDate = setQuickDate;
 /* ================= REPORT ACTIONS ================= */
 
 
+
+function allowRetry(key) {
+    if(!key) return;
+    resultsRef.child(key).update({ retryAllowed: true }).then(() => {
+        showNotification("Student allowed to retry this exam");
+        showReport();
+    }).catch(err => {
+        showNotification("Error: " + err.message, true);
+    });
+}
+window.allowRetry = allowRetry;
 
 function resetReport(){
     if(!confirm("Are you sure you want to permanently delete all results? This cannot be undone.")){

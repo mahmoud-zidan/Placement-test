@@ -161,6 +161,22 @@ function setView(view, newForm=false){
 
     if(view === "orgs") renderOrgList();
     if(view === "report") populateReportFilters();
+    if(view === "form") populateExamOrgDropdown();
+}
+
+function populateExamOrgDropdown() {
+    const select = document.getElementById("examOrg");
+    if(!select) return;
+    
+    // Clear existing except "All"
+    select.innerHTML = '<option value="all">All Organizations (Public)</option>';
+    
+    Object.values(orgsCache).forEach(org => {
+        const opt = document.createElement("option");
+        opt.value = org.name;
+        opt.textContent = org.name;
+        select.appendChild(opt);
+    });
 }
 
 /* ================= QUESTIONS ================= */
@@ -176,15 +192,23 @@ d.innerHTML=`
 </div>
 <textarea style="width:100%; margin-bottom: 12px;" placeholder="Enter question text here..."></textarea>
 
-<div style="background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-    <label style="margin-bottom: 8px; display: block;">Media Attachment (Optional)</label>
+<div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border);">
+    <label style="margin-bottom: 8px; display: block; font-size: 0.85rem; font-weight: 600; color: #475569;">📁 Media Attachment (Optional)</label>
     <div style="display: flex; gap: 12px;">
-        <select class="media-type" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+        <select class="media-type" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem;">
             <option value="none">No Media</option>
             <option value="audio">Audio Link</option>
             <option value="video">Video Link (YouTube)</option>
         </select>
-        <input type="text" class="media-url" placeholder="Paste link here..." style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+        <input type="text" class="media-url" placeholder="Paste link here..." style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem;">
+    </div>
+</div>
+
+<div style="background: #fefce8; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #fef08a;">
+    <label style="margin-bottom: 8px; display: block; font-size: 0.85rem; font-weight: 600; color: #854d0e;">⏱️ Time Limit for this Question</label>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <input type="number" class="question-time" min="0" placeholder="e.g. 30" style="width: 100px; padding: 8px; border-radius: 6px; border: 1px solid #fde047;" value="${q.timeLimit || 0}">
+        <span style="font-size: 0.8rem; color: #a16207;">Seconds (0 = Unlimited)</span>
     </div>
 </div>
 
@@ -236,6 +260,7 @@ document.getElementById("examForm").onsubmit=e=>{
 e.preventDefault();
 const key=document.getElementById("examKey").value;
 const title = document.getElementById("examTitle").value.trim();
+const targetOrg = document.getElementById("examOrg").value;
 const isVisible = document.getElementById("examVisibility").checked;
 
 if(!title){
@@ -247,6 +272,7 @@ const questions = [...document.querySelectorAll(".question-block")].map(q=>{
 const text = q.querySelector("textarea").value.trim();
 const mediaType = q.querySelector(".media-type").value;
 const mediaUrl = q.querySelector(".media-url").value.trim();
+const timeLimit = parseInt(q.querySelector(".question-time").value) || 0;
 
 if(!text){
     showNotification("All questions must have text", true);
@@ -256,6 +282,7 @@ return {
     text: text,
     mediaType: mediaType !== "none" ? mediaType : null,
     mediaUrl: mediaUrl || null,
+    timeLimit: timeLimit,
     answers:[...q.querySelectorAll(".answers > div")].map(a=>({
         text:a.querySelector("input[type=text]").value.trim(),
         isCorrect:a.querySelector("input[type=checkbox]").checked
@@ -270,6 +297,7 @@ if(questions.length === 0){
 
 const exam={
     title: title,
+    targetOrg: targetOrg,
     isVisible: isVisible,
     questions: questions,
     updatedAt: new Date().toISOString()
@@ -353,6 +381,7 @@ if(!e){
 setView("form");
 document.getElementById("examKey").value=k;
 document.getElementById("examTitle").value=e.title;
+document.getElementById("examOrg").value=e.targetOrg || "all";
 document.getElementById("examVisibility").checked = e.isVisible !== false;
 document.getElementById("questionsContainer").innerHTML="";
 qid=0;

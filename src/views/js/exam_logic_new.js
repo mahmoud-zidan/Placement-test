@@ -21,7 +21,11 @@ const orgsRef = database.ref('organizations');
 // Retrieve student identity from session if available
 let studentInfo = JSON.parse(sessionStorage.getItem('studentInfo') || 'null');
 
-let currentExamData = null; // Store the selected exam data
+let currentExamData = null; 
+let currentQuestionIndex = 0;
+let studentAnswers = [];
+let examTimer = null;
+let timeLeft = 0;
 
 window.loadExamList = () => {
     const listDiv = document.getElementById('examList');
@@ -38,7 +42,13 @@ window.loadExamList = () => {
 
         Object.keys(exams).forEach(key => {
             const exam = exams[key];
-            if (exam.isVisible === false) return; // Skip hidden exams
+            if (exam.isVisible === false) return;
+            
+            // Filter by Organization
+            const studentOrg = studentInfo ? studentInfo.org : null;
+            if (exam.targetOrg && exam.targetOrg !== "all" && exam.targetOrg !== studentOrg) {
+                return; // Skip if not for this student's org
+            }
 
             const item = document.createElement('div');
             item.className = 'exam-list-item';
@@ -50,22 +60,20 @@ window.loadExamList = () => {
 };
 
 window.resetView = () => {
+    if(examTimer) clearInterval(examTimer);
     document.getElementById('examDisplay').style.display = 'none';
     document.getElementById('examSelection').style.display = 'block';
-    document.getElementById('results').style.display = 'none';
     document.getElementById('quizForm').innerHTML = '';
     window.loadExamList();
 }
 
 window.onload = () => {
-    // If student is already registered in this session, skip registration
     if (studentInfo) {
         document.getElementById('registrationView').style.display = 'none';
         document.getElementById('examSelection').style.display = 'block';
         window.loadExamList();
     }
 
-    // Fetch organizations for the dropdown
     orgsRef.once('value', (snapshot) => {
         const orgs = snapshot.val();
         const select = document.getElementById('orgSelect');
@@ -86,7 +94,7 @@ window.registerStudent = () => {
     const org = document.getElementById('orgSelect').value;
 
     if (!name || !id || !org) {
-        alert("Please fill in all fields and select an organization.");
+        alert("Please fill in all fields.");
         return;
     }
 
@@ -98,128 +106,236 @@ window.registerStudent = () => {
     window.loadExamList();
 };
 
-// B//
 window.startExam = (key) => {
-    examsRef.child(key).once('value', (snapshot) => {
-        currentExamData = snapshot.val();
-        currentExamData.id = key; // Store the exam key
-        if (!currentExamData || !currentExamData.questions) {
-            alert("This exam is empty or invalid.");
+    // Check for existing results first
+    resultsRef.orderByChild('nationalId').equalTo(studentInfo.id).once('value', (snap) => {
+        const results = snap.val();
+        let existingResult = null;
+        let resultKey = null;
+
+        if (results) {
+            Object.keys(results).forEach(k => {
+                if (results[k].examId === key) {
+                    existingResult = results[k];
+                    resultKey = k;
+                }
+            });
+        }
+
+        if (existingResult && !existingResult.retryAllowed) {
+            alert("You have already completed this exam. If you need to retry, please contact the administrator.");
             return;
         }
 
-        document.getElementById('examSelection').style.display = 'none';
-        document.getElementById('examDisplay').style.display = 'block';
-        document.getElementById('examTitle').textContent = currentExamData.title;
-        
-        const form = document.getElementById('quizForm');
-        form.innerHTML = '';
-        
-        currentExamData.questions.forEach((q, qIndex) => {
-            const qDiv = document.createElement('div');
-            qDiv.className = 'question';
-            
-            // 1. Render Media
-            let mediaHTML = '';
-            if (q.mediaType === 'audio' && q.mediaUrl) {
-                // This is the correct way to render the audio element
-                mediaHTML = `<div class="media-container"><audio controls src="${q.mediaUrl}">Your browser does not support the audio element.</audio></div>`;
-            } 
-            // ... rest of the video logic
-             else if (q.mediaType === 'video' && q.mediaUrl) {
-                // For YouTube, embed it in an iframe
-                let videoSrc = q.mediaUrl;
-                if (q.mediaUrl.includes('youtube.com/watch?v=')) {
-                    const videoId = q.mediaUrl.split('v=')[1].split('&')[0];
-                    videoSrc = `https://www.youtube.com/embed/${videoId}`;
-                }
-                // Handle basic video links or the resulting YouTube embed link
-                mediaHTML = `<div class="media-container"><iframe width="100%" height="315" src="${videoSrc}" frameborder="0" allowfullscreen></iframe></div>`;
-            }
-            
-            // 2. Render Question Text
-            const questionText = q.text || `Question ${qIndex + 1}`;
-            
-            let answersHTML = q.answers.map((a, aIndex) => `
-                <div class="answer">
-                    <label>
-                        <input type="radio" name="question_${qIndex}" value="${aIndex}">
-                        ${a.text}
-                    </label>
-                </div>
-            `).join('');
+        // If retry is allowed, clear the flag for the next time (or keep it, but usually we clear it once used)
+        if (existingResult && existingResult.retryAllowed) {
+            resultsRef.child(resultKey).update({ retryAllowed: false });
+        }
 
-            qDiv.innerHTML = `
-                <h4>Question ${qIndex + 1}: ${questionText}</h4>
-                ${mediaHTML}
-                ${answersHTML}
-            `;
-            form.appendChild(qDiv);
+        examsRef.child(key).once('value', (snapshot) => {
+            currentExamData = snapshot.val();
+            currentExamData.id = key;
+            if (!currentExamData || !currentExamData.questions) {
+                alert("This exam is empty or invalid.");
+                return;
+            }
+
+            currentQuestionIndex = 0;
+            studentAnswers = new Array(currentExamData.questions.length).fill(null);
+            
+            document.getElementById('examSelection').style.display = 'none';
+            document.getElementById('examDisplay').style.display = 'block';
+            document.getElementById('examTitle').textContent = currentExamData.title;
+            
+            // Disable back navigation during exam
+            const backBtn = document.getElementById('backBtn');
+            if(backBtn) backBtn.style.display = 'none';
+            
+            window.renderQuestion();
         });
     });
 };
 
-// C //
+window.renderQuestion = () => {
+    if(examTimer) clearInterval(examTimer);
+    
+    const qIndex = currentQuestionIndex;
+    const q = currentExamData.questions[qIndex];
+    const form = document.getElementById('quizForm');
+    const progress = document.getElementById('examProgress');
+    
+    // Update Progress
+    const progressPercent = ((qIndex + 1) / currentExamData.questions.length) * 100;
+    progress.style.width = `${progressPercent}%`;
+
+    form.innerHTML = '';
+    
+    const qDiv = document.createElement('div');
+    qDiv.className = 'question-fade-in';
+
+    // Media
+    let mediaHTML = '';
+    if (q.mediaType === 'audio' && q.mediaUrl) {
+        mediaHTML = `<div class="media-container"><audio controls src="${q.mediaUrl}" autoplay></audio></div>`;
+    } else if (q.mediaType === 'video' && q.mediaUrl) {
+        let videoSrc = q.mediaUrl;
+        if (q.mediaUrl.includes('youtube.com/watch?v=')) {
+            const videoId = q.mediaUrl.split('v=')[1].split('&')[0];
+            videoSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        }
+        mediaHTML = `<div class="media-container"><iframe width="100%" height="315" src="${videoSrc}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe></div>`;
+    }
+
+    const answersHTML = q.answers.map((a, aIndex) => `
+        <div class="answer-item" onclick="selectOption(${aIndex})" id="opt_${aIndex}" style="cursor: pointer; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; transition: all 0.2s;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="radio-circle" style="width: 20px; height: 20px; border: 2px solid #cbd5e1; border-radius: 50%;"></div>
+                <span style="font-size: 1rem; color: #334155;">${a.text}</span>
+            </div>
+        </div>
+    `).join('');
+
+    const isLast = qIndex === currentExamData.questions.length - 1;
+    const buttonText = isLast ? 'Finish Exam' : 'Next Question →';
+    const buttonClass = isLast ? 'btn-finish' : 'btn-primary';
+
+    qDiv.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <span style="color: #6366f1; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em;">Question ${qIndex + 1} of ${currentExamData.questions.length}</span>
+            <h3 style="margin-top: 8px; font-size: 1.4rem; color: #1e293b;">${q.text}</h3>
+        </div>
+        ${mediaHTML}
+        <div id="answersList" style="margin-top: 24px;">
+            ${answersHTML}
+        </div>
+        <div style="margin-top: 32px; display: flex; gap: 12px;">
+            <button onclick="window.endExamEarly()" class="btn-danger" style="flex: 1; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none;">
+                End Exam
+            </button>
+            <button onclick="window.handleNext()" class="${buttonClass}" style="flex: 2; padding: 16px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer;">
+                ${buttonText}
+            </button>
+        </div>
+    `;
+    form.appendChild(qDiv);
+
+    // Timer Logic
+    const timerDisplay = document.getElementById('timerDisplay');
+    if (q.timeLimit && q.timeLimit > 0) {
+        timerDisplay.style.display = 'block';
+        timeLeft = q.timeLimit;
+        document.getElementById('timerSeconds').textContent = timeLeft;
+        
+        examTimer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timerSeconds').textContent = timeLeft;
+            
+            if (timeLeft <= 5) {
+                timerDisplay.style.borderColor = '#ef4444';
+                timerDisplay.style.background = '#fef2f2';
+            } else {
+                timerDisplay.style.borderColor = '#fca5a5';
+                timerDisplay.style.background = '#fee2e2';
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(examTimer);
+                window.handleNext(); // Auto transition
+            }
+        }, 1000);
+    } else {
+        timerDisplay.style.display = 'none';
+    }
+};
+
+window.selectOption = (index) => {
+    studentAnswers[currentQuestionIndex] = index;
+    // Highlight UI
+    document.querySelectorAll('.answer-item').forEach((el, i) => {
+        const circle = el.querySelector('.radio-circle');
+        if (i === index) {
+            el.style.borderColor = '#4f46e5';
+            el.style.background = '#eef2ff';
+            circle.style.borderColor = '#4f46e5';
+            circle.style.background = '#4f46e5';
+            circle.style.boxShadow = 'inset 0 0 0 3px white';
+        } else {
+            el.style.borderColor = '#e2e8f0';
+            el.style.background = 'white';
+            circle.style.borderColor = '#cbd5e1';
+            circle.style.background = 'transparent';
+            circle.style.boxShadow = 'none';
+        }
+    });
+};
+
+window.handleNext = () => {
+    if(examTimer) clearInterval(examTimer);
+    
+    if (currentQuestionIndex < currentExamData.questions.length - 1) {
+        currentQuestionIndex++;
+        window.renderQuestion();
+    } else {
+        window.submitExam();
+    }
+};
+
+window.endExamEarly = () => {
+    if(confirm("Are you sure you want to end the exam now? All unanswered questions will be marked as incorrect.")) {
+        if(examTimer) clearInterval(examTimer);
+        window.submitExam();
+    }
+};
+
 window.submitExam = () => {
-    if (!currentExamData || !currentExamData.questions) return;
+    if (!currentExamData) return;
 
     let score = 0;
     const totalQuestions = currentExamData.questions.length;
-    const form = document.getElementById('quizForm');
-    
-    // Get all question HTML containers
-    const questionDivs = form.querySelectorAll('.question');
 
     currentExamData.questions.forEach((q, qIndex) => {
-        const questionDiv = questionDivs[qIndex];
-        const selector = `input[name="question_${qIndex}"]:checked`;
-        const selectedAnswerInput = questionDiv ? questionDiv.querySelector(selector) : null;
-        
-        if (selectedAnswerInput) {
-            const selectedAnswerIndex = parseInt(selectedAnswerInput.value);
-            if (q.answers[selectedAnswerIndex].isCorrect) {
+        const selectedIndex = studentAnswers[qIndex];
+        if (selectedIndex !== null) {
+            if (q.answers[selectedIndex].isCorrect) {
                 score++;
             }
         }
     });
 
     const percentage = ((score / totalQuestions) * 100).toFixed(0);
-    const resultsDiv = document.getElementById('results');
     
-    if (resultsDiv) {
-        resultsDiv.style.display = 'block';
-        resultsDiv.innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-                <h3 style="color: #166534; margin-bottom: 10px;">Exam Submitted Successfully!</h3>
-                <p>Thank you for completing the exam. Your results have been recorded and sent to the administrator.</p>
-            </div>
-        `;
-    }
-    
-    // Disable the form after submission
-    form.querySelectorAll('input').forEach(input => input.disabled = true);
-
-    // Store result in Firebase
-    const info = JSON.parse(sessionStorage.getItem('studentInfo') || 'null');
-    console.log('Submitting exam. Student Info from session:', info);
-
+    // Save to Firebase
     const resultData = {
-        examId: currentExamData.id || 'unknown',
-        examTitle: currentExamData.title || 'Unknown Exam',
-        studentName: (info && info.name) ? info.name : "Anonymous",
-        nationalId: (info && info.id) ? info.id : "N/A",
-        orgName: (info && info.org) ? info.org : "N/A",
+        studentName: studentInfo.name,
+        nationalId: studentInfo.id,
+        orgName: studentInfo.org,
+        examId: currentExamData.id,
+        examTitle: currentExamData.title,
         score: score,
         totalQuestions: totalQuestions,
         percentage: percentage,
-        timestamp: new Date().toISOString()
+        timestamp: firebase.database.ServerValue.TIMESTAMP
     };
+
     resultsRef.push(resultData).then(() => {
-        console.log('Result stored successfully');
-    }).catch(error => {
-        console.error('Error storing result:', error);
-        alert('Error storing result: ' + error.message);
+        document.getElementById('quizForm').innerHTML = '';
+        document.getElementById('timerDisplay').style.display = 'none';
+        document.getElementById('examProgress').style.width = '100%';
+        
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+                <h2 style="color: #1e293b; margin-bottom: 12px; font-family: 'Outfit';">Congratulations!</h2>
+                <p style="color: #64748b; font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px;">
+                    You have completed the <b>${currentExamData.title}</b>.<br>
+                    Your results have been securely recorded.
+                </p>
+                <button onclick="window.location.reload()" class="btn-primary" style="padding: 12px 32px; border-radius: 12px; font-weight: 600;">Return Home</button>
+            </div>
+        `;
+    }).catch(err => {
+        alert("Error saving results: " + err.message);
     });
 };
-
-
